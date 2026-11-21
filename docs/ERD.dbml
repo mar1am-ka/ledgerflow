@@ -1,0 +1,179 @@
+
+Project LedgerFlow {
+  database_type: 'SQLServer'
+  Note: 'Personal Finance Management System'
+}
+
+// ==========================================
+// 1. USERS
+// ==========================================
+
+Table Users {
+  UserID int [pk, increment]
+  FirstName varchar(50) [not null]
+  LastName varchar(50) [not null]
+  Email varchar(150) [not null, unique]
+  PasswordHash varchar(255) [not null]
+  CreatedAt datetime [not null]
+}
+
+// ==========================================
+// 2. ACCOUNT TYPES
+// ==========================================
+
+Table AccountTypes {
+  AccountTypeID int [pk, increment]
+  TypeName varchar(50) [not null, unique]
+  Description varchar(255)
+}
+
+// ==========================================
+// 3. ACCOUNTS
+// ==========================================
+
+Table Accounts {
+  AccountID int [pk, increment]
+  UserID int [not null]
+  AccountTypeID int [not null]
+  AccountName varchar(100) [not null]
+  OpeningBalance decimal(18,2) [not null]
+  Balance decimal(18,2) [not null]
+  Currency varchar(3) [not null]
+  CreatedAt datetime [not null]
+}
+
+// ==========================================
+// 4. CATEGORIES
+// Default categories have no UserID.
+// Custom categories belong to a user.
+// ==========================================
+
+Table Categories {
+  CategoryID int [pk, increment]
+  UserID int
+  Name varchar(100) [not null]
+  Type varchar(20) [not null]
+  IsDefault boolean [not null]
+  CreatedAt datetime [not null]
+}
+
+// ==========================================
+// 5. TRANSACTIONS
+// Records income and expenses.
+// ==========================================
+
+Table Transactions {
+  TransactionID int [pk, increment]
+  AccountID int [not null]
+  CategoryID int [not null]
+  Amount decimal(18,2) [not null]
+  Type varchar(20) [not null]
+  Description varchar(255)
+  TransactionDate datetime [not null]
+  CreatedAt datetime [not null]
+  ReversesTransactionID int
+}
+
+// ==========================================
+// 6. TRANSFERS
+// Records internal and external transfers.
+// ==========================================
+
+Table Transfers {
+  TransferID int [pk, increment]
+  SourceAccountID int [not null]
+  DestinationAccountID int
+  TransferType varchar(20) [not null]
+  RecipientName varchar(150)
+  Amount decimal(18,2) [not null]
+  TransferDate datetime [not null]
+  Description varchar(255)
+  CreatedAt datetime [not null]
+}
+
+// ==========================================
+// 7. BUDGETS
+// ==========================================
+
+Table Budgets {
+  BudgetID int [pk, increment]
+  UserID int [not null]
+  CategoryID int [not null]
+  AmountLimit decimal(18,2) [not null]
+  StartDate date [not null]
+  EndDate date [not null]
+  CreatedAt datetime [not null]
+}
+
+// ==========================================
+// 8. JOURNAL ENTRIES
+// Represents an overall financial event.
+// ==========================================
+
+Table JournalEntries {
+  JournalEntryID int [pk, increment]
+  UserID int [not null]
+  Description varchar(255)
+  EntryDate datetime [not null]
+  CreatedAt datetime [not null]
+}
+
+// ==========================================
+// 9. JOURNAL ENTRY LINES
+// Records the debit and credit sides.
+// Each entry must have balanced lines.
+// ==========================================
+
+Table JournalEntryLines {
+  JournalEntryLineID int [pk, increment]
+  JournalEntryID int [not null]
+  AccountID int
+  CategoryID int
+  Debit decimal(18,2) [not null, default: 0]
+  Credit decimal(18,2) [not null, default: 0]
+  CreatedAt datetime [not null]
+}
+
+// ==========================================
+// RELATIONSHIPS
+// ==========================================
+
+// Users and accounts
+Ref: Users.UserID < Accounts.UserID
+
+// Account types and accounts
+Ref: AccountTypes.AccountTypeID < Accounts.AccountTypeID
+
+// Users and custom categories
+Ref: Users.UserID < Categories.UserID
+
+// Accounts and transactions
+Ref: Accounts.AccountID < Transactions.AccountID
+
+// Categories and transactions
+Ref: Categories.CategoryID < Transactions.CategoryID
+
+// Original transaction and its reversal
+Ref: Transactions.TransactionID - Transactions.ReversesTransactionID
+
+// Transfers: source and destination accounts
+Ref: Accounts.AccountID < Transfers.SourceAccountID
+Ref: Accounts.AccountID < Transfers.DestinationAccountID
+
+// Users and budgets
+Ref: Users.UserID < Budgets.UserID
+
+// Categories and budgets
+Ref: Categories.CategoryID < Budgets.CategoryID
+
+// Users and journal entries
+Ref: Users.UserID < JournalEntries.UserID
+
+// Journal entries and their lines
+Ref: JournalEntries.JournalEntryID < JournalEntryLines.JournalEntryID
+
+// Journal entry lines and accounts
+Ref: Accounts.AccountID < JournalEntryLines.AccountID
+
+// Journal entry lines and categories
+Ref: Categories.CategoryID < JournalEntryLines.CategoryID
