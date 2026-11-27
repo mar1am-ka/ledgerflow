@@ -539,3 +539,10 @@ Unauthorized users cannot access another user's financial information.
 Important financial activities are recorded in audit logs.
 
 Core business rules are covered by automated tests.
+
+## Methods for each Entity
+## 1.User
+
+RegisterAsync() --> checks whether the email exists, the password is hashed, and saves a new user
+LoginAsync() --> finds the user by email and verifies the password
+updateUserAsync() --> update profile's First and last names
